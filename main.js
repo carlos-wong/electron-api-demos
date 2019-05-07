@@ -35,6 +35,36 @@ function initialize () {
     mainWindow = new BrowserWindow(windowOptions)
     mainWindow.loadURL(path.join('file://', __dirname, '/index.html'))
 
+
+    let win = new BrowserWindow()
+    win.webContents.session.on('will-download', (event, item, webContents) => {
+      // Set the save path, making Electron not to prompt a save dialog.
+      item.setSavePath('/tmp/save.pdf')
+
+      item.on('updated', (event, state) => {
+        if (state === 'interrupted') {
+          console.log('Download is interrupted but can be resumed');
+        } else if (state === 'progressing') {
+          if (item.isPaused()) {
+            console.log('Download is paused')
+          } else {
+            console.log(`Received bytes: ${item.getReceivedBytes()}`)
+          }
+        }
+      })
+      item.once('done', (event, state) => {
+        if (state === 'completed') {
+          console.log('Download successfully')
+        } else {
+          console.log(`Download failed: ${state}`)
+        }
+      })
+    });
+    win.webContents.downloadURL("http://aelosminienleju.centralus.cloudapp.azure.com:8080/client/autobuild_Pando_1.2.apk");
+    // win.webContents.downloadURL("http://aelosministore.lejurobot.com:10002/client/miniversion.xml");
+    
+    console.log("Try to Download apk");
+
     // Launch fullscreen with DevTools open, usage: npm run debug
     if (debug) {
       mainWindow.webContents.openDevTools()
